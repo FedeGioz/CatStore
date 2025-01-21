@@ -94,7 +94,6 @@ class Color(Enum):
     YELLOW = 6
     MIXED = 6
 
-
 class CatSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -107,5 +106,5 @@ class CatCreateAPIView(APIView):
         cats = Cat.objects.filter(available=True)
         serializer = CatSerializer(cats, many=True)
         return Response(serializer.data)
-
-
+      
+      
