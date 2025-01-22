@@ -1,0 +1,12 @@
+{% extends 'master.html' %}
+
+{% block title %}Error{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="text-center">
+        <h1>Oops! Something went wrong.</h1>
+        <h2 id="error_code">Error: {{ message }}</h2>
+    </div>
+</div>
+{% endblock %}

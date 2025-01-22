@@ -1,0 +1,18 @@
+{# Script da embeddare nella pagina di successo dopo pagamento da Stripe per verificare acquirente e salvarlo nel database di Persona sul sito #}
+
+<script src="https://cdn.withpersona.com/dist/persona-v5.1.2.js" integrity="sha384-nuMfOsYXMwp5L13VJicJkSs8tObai/UtHEOg3f7tQuFWU5j6LAewJbjbF5ZkfoDo" crossorigin="anonymous"></script>
+<script>
+  const client = new Persona.Client({
+    templateId: 'itmpl_7CxBqeDA5ngL9YRJ2ALRJp7Q27JD',
+    environmentId: 'env_cWLrREH8971jxv5PdFCNc3gHj4HB',
+    onReady: () => client.open(),
+    onComplete: ({ inquiryId, status, fields }) => {
+      if(status === 'completed') {
+        // Aggiungere funzione aggiunta del gatto all'account dell'utente (acquisto con successo, verificato e pagato),
+        // con conseguente possibilita' di scaricare tutti i documenti relativi al gatto come certificato di nascita
+        // e carta d'identita' generata con api carine
+        console.log('Verification completed', inquiryId, fields);
+      }
+    }
+  });
+</script>
