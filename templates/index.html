@@ -1,0 +1,32 @@
+{% extends 'master.html' %}
+
+{% block title %}Welcome to CatStore{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="text-center">
+        <h1>Welcome to CatStore!</h1>
+        <p class="lead">Your one-stop shop for finding the purrfect feline friend.</p>
+    </div>
+
+    <!-- Featured Cats - 3 random cats taken from DB to show on the homepage, the rest will be shown in the "All Cats" page -->
+    <h3 class="my-4">Featured Cats</h3>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        <!-- Example cat card, in reality they need to be generated with a foreach when DB will be ready -->
+        <div class="col">
+            <div class="card">
+                <img src="https://i.pinimg.com/736x/8f/ab/45/8fab45c0d2f8173ac047119d57b71ef6.jpg" class="card-img-top" alt="Cat Name">
+                <div class="card-body">
+                    <h5 class="card-title">Urur</h5>
+                    <p class="card-text">Breed: Sphynx</p>
+                    <p class="card-text text-success">EUR 1000</p>
+                    <div class="d-flex justify-content-between">
+                        <a href="#" class="btn btn-primary">Add to Wishlist</a>
+                        <a href="{% url 'buy' 1 %}" class="btn btn-success">Buy Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

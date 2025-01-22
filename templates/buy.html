@@ -1,0 +1,28 @@
+{% extends 'master.html' %}
+{% load static %}
+
+{% block title %}Buy Your Cat{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Complete Your Purchase</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <img src="{{ cat.image_url }}" class="card-img-top" alt="{{ cat.name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ cat.name }}</h5>
+                    <p class="card-text">Breed: {{ cat.breed }}</p>
+                    <p class="card-text">Age: {{ cat.age }} years</p>
+                    <p class="card-text text-success h4">Price: EUR {{ cat.price }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-center">
+            <button class="btn btn-primary" id="submitBtn">Purchase!</button>
+        </div>
+    </div>
+</div>
+<script src="https://js.stripe.com/v3/"></script>
+<script src="{% static 'stripe_config.js' %}"></script>
+{% endblock %}
