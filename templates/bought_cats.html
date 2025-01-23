@@ -1,0 +1,25 @@
+{% extends 'master.html' %}
+
+{% block title %}Bought Cats{% endblock %}
+
+{% block content %}
+    <h1>Bought Cats</h1>
+    <div class="col">
+            <div class="card">
+                <img src="https://i.pinimg.com/736x/8f/ab/45/8fab45c0d2f8173ac047119d57b71ef6.jpg" class="card-img-top" alt="Cat Name">
+                <div class="card-body">
+                    <h5 class="card-title" id="cat-name">Urur</h5>
+                    <p class="card-text">Breed: Sphynx</p>
+                    <p class="card-text text-success">EUR 1000</p>
+                    <div class="d-flex justify-content-between">
+                        <form method="POST" action="{% url 'wishlist' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="cat_id" value="1">
+                            <button type="submit" class="btn btn-primary">Add to Wishlist</button>
+                        </form>
+                        <a href="{% url 'buy' 1 %}" class="btn btn-success">Buy Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}

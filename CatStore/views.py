@@ -1,8 +1,9 @@
+import stripe
 from stripe.checkout import Session
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.views.generic import TemplateView
 from django.conf import settings
@@ -10,11 +11,6 @@ from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import *
-
-from rest_framework import status
-from rest_framework.generics import get_object_or_404
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 
 def index(request):
@@ -46,6 +42,7 @@ def stripe_config(request):
 @csrf_exempt
 def create_checkout_session(request):
     if request.method == 'GET':
+        domain_url = 'http://127.0.0.1:8000/'
         domain_url = 'http://127.0.0.1:8000/'
         stripe.api_key = settings.STRIPE_SECRET_KEY
         try:
@@ -81,7 +78,7 @@ def login_page(request):
         if not User.objects.filter(username=username).exists():
             # Display an error message if the username does not exist
             messages.error(request, 'Invalid Username')
-            return redirect('/login/')
+            return redirect('/accounts/login/')
 
         # Authenticate the user with the provided username and password
         user = authenticate(username=username, password=password)
@@ -89,7 +86,7 @@ def login_page(request):
         if user is None:
             # Display an error message if authentication fails (invalid password)
             messages.error(request, "Invalid Password")
-            return redirect('/login/')
+            return redirect('/accounts/login/')
         else:
             # Log in the user and redirect to the home page upon successful login
             login(request, user)
@@ -146,7 +143,55 @@ def wishlist(request):
     if request.user.is_authenticated:
         if request.method == "POST":
             cat_id = request.POST.get('cat_id')
+            user = request.user
+            Wishlist.objects.filter(user=user, cat=1)
             return render(request, 'wishlist.html')
+        else:
+            return render(request, 'wishlist.html')
+    else:
+        return redirect('/login/')
+
+def is_staff(user):
+    return user.groups.filter(name='Administrator').exists()
+
+
+
+def new_cat(request):
+    if not request.user.is_authenticated:
+        return render(request, 'error.html', {'message': 'You are not logged in!'})
+
+    if not is_staff(request.user):
+        return render(request, 'error.html', {'message': 'You aren\'t allowed to create a new cat!'})
+
+    if request.method == "POST":
+        name = request.POST.get('name')
+        age = request.POST.get('age')
+        color = request.POST.get('color')
+        breed = request.POST.get('breed')
+        price = request.POST.get('price')
+        description = request.POST.get('description')
+        image_url = request.POST.get('image_url')
+
+        Cat.objects.create(
+            name=name,
+            age=age,
+            color=color,
+            breed=breed,
+            price=price,
+            description=description,
+            image_url=image_url
+        )
+
+        return render(request, 'admin/new_cat.html')
+    else:
+        return render(request, 'admin/new_cat.html')
+
+def manage_cats(request):
+    #cats = Cat.objects.all()
+    return render(request, 'admin/manage_cats.html')
+
+def edit_cat(request):
+    return render(request, 'admin/edit_cat.html')
 
 class SuccessView(TemplateView):
     template_name = 'payment_success.html'
