@@ -16,11 +16,7 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
     </content>
-<<<<<<< HEAD
     <orderEntry type="jdk" jdkName="Python 3.12 (CatStore)" jdkType="Python SDK" />
-=======
-    <orderEntry type="jdk" jdkName="Python 3.13" jdkType="Python SDK" />
->>>>>>> origin/master
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="bootstrap" level="application" />
   </component>
