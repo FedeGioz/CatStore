@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from CatStore import views
 from CatStore.views import login_page, register_page
+from CatStore.views import login_page, register_page
 
 urlpatterns = [
     path('admin/', admin.site.urls),
