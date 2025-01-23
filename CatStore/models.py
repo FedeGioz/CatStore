@@ -1,5 +1,5 @@
 from enum import Enum
-
+from django.contrib.auth.models import User
 from django.db import models
 from rest_framework import serializers
 from rest_framework.response import Response
@@ -106,5 +106,12 @@ class CatCreateAPIView(APIView):
         cats = Cat.objects.filter(available=True)
         serializer = CatSerializer(cats, many=True)
         return Response(serializer.data)
-      
-      
+
+
+class Wishlist(models.Model):
+    cat_id: int
+    user_id: int
+
+    def __init__(self, cat_id: int, user_id: int):
+        self.cat_id = cat_id
+        self.user_id = user_id
