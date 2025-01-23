@@ -1,11 +1,10 @@
-import stripe
+from stripe.checkout import Session
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.views.generic import TemplateView
-from werkzeug.exceptions import InternalServerError
 from django.conf import settings
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -47,7 +46,7 @@ def stripe_config(request):
 @csrf_exempt
 def create_checkout_session(request):
     if request.method == 'GET':
-        domain_url = 'http://0.0.0.0:8000/'
+        domain_url = 'http://127.0.0.1:8000/'
         stripe.api_key = settings.STRIPE_SECRET_KEY
         try:
             checkout_session = stripe.checkout.Session.create(
@@ -71,6 +70,83 @@ def create_checkout_session(request):
             return JsonResponse({'sessionId': checkout_session['id']})
         except Exception as e:
             return JsonResponse({'error': str(e)})
+
+def login_page(request):
+    # Check if the HTTP request method is POST (form submission)
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        # Check if a user with the provided username exists
+        if not User.objects.filter(username=username).exists():
+            # Display an error message if the username does not exist
+            messages.error(request, 'Invalid Username')
+            return redirect('/login/')
+
+        # Authenticate the user with the provided username and password
+        user = authenticate(username=username, password=password)
+
+        if user is None:
+            # Display an error message if authentication fails (invalid password)
+            messages.error(request, "Invalid Password")
+            return redirect('/login/')
+        else:
+            # Log in the user and redirect to the home page upon successful login
+            login(request, user)
+            return redirect('/')
+
+    # Render the login page template (GET request)
+    return render(request, 'login.html')
+
+
+def logout_page(request):
+    if request.method == "POST":
+        if request.user.is_authenticated:
+            logout(request)
+            return render(request, 'logout_page.html')
+
+    return redirect('/')
+
+
+def register_page(request):
+    # Check if the HTTP request method is POST (form submission)
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        # Check if a user with the provided username already exists
+        user = User.objects.filter(username=username)
+
+        if user.exists():
+            # Display an information message if the username is taken
+            messages.info(request, "Username already taken!")
+            return redirect('/register/')
+
+        # Create a new User object with the provided information
+        user = User.objects.create_user(
+            first_name=first_name,
+            last_name=last_name,
+            username=username
+        )
+
+        # Set the user's password and save the user object
+        user.set_password(password)
+        user.save()
+
+        # Display an information message indicating successful account creation
+        messages.info(request, "Account created Successfully!")
+        return redirect('/register/')
+
+    # Render the registration page template (GET request)
+    return render(request, 'register.html')
+
+def wishlist(request):
+    if request.user.is_authenticated:
+        if request.method == "POST":
+            cat_id = request.POST.get('cat_id')
+            return render(request, 'wishlist.html')
 
 class SuccessView(TemplateView):
     template_name = 'payment_success.html'

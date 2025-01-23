@@ -1,0 +1,34 @@
+{% extends 'master.html' %}
+
+{% block title %}Your Wishlist{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Your Wishlist</h1>
+    {% if wishlist_cats %}
+        <div class="row g-4">
+            {% for cat in wishlist_cats %}
+            <div class="col-12">
+                <div class="card flex-row">
+                    <img src="{{ cat.image_url }}" class="card-img-left img-fluid" style="max-width: 200px;" alt="{{ cat.name }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ cat.name }}</h5>
+                        <p class="card-text">Breed: {{ cat.breed }}</p>
+                        <p class="card-text">Age: {{ cat.age }} years</p>
+                        <p class="card-text text-success h5">EUR {{ cat.price }}</p>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'buy' cat.id %}" class="btn btn-success">Buy Now</a>
+                            <a href="{% url 'remove_from_wishlist' cat.id %}" class="btn btn-danger">Remove</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center" role="alert">
+            Your wishlist is empty. Start adding some cats!
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
