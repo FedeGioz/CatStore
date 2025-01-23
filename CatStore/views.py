@@ -144,10 +144,11 @@ def register_page(request):
     return render(request, 'register.html')
 
 def wishlist(request):
-    #if request.method == "POST":
-
-
-    return render(request, 'wishlist.html')
+    if request.user.is_authenticated:
+        if request.method == "POST":
+            cat_id = request.POST.get('cat_id')
+            Wishlist.
+            return render(request, 'wishlist.html')
 
 class SuccessView(TemplateView):
     template_name = 'payment_success.html'
