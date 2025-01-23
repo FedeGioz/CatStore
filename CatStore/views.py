@@ -1,4 +1,4 @@
-import stripe
+from stripe.checkout import Session
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -70,7 +70,6 @@ def create_checkout_session(request):
             return JsonResponse({'sessionId': checkout_session['id']})
         except Exception as e:
             return JsonResponse({'error': str(e)})
-
 
 def login_page(request):
     # Check if the HTTP request method is POST (form submission)
