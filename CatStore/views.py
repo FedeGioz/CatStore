@@ -147,7 +147,6 @@ def wishlist(request):
     if request.user.is_authenticated:
         if request.method == "POST":
             cat_id = request.POST.get('cat_id')
-            Wishlist.
             return render(request, 'wishlist.html')
 
 class SuccessView(TemplateView):
