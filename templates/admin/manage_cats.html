@@ -1,0 +1,29 @@
+{% extends 'master.html' %}
+
+{% block title %}Manage Cats{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="text-center">
+        <h1>Manage Cats</h1>
+        <p class="lead">Here you can add, edit or delete cats from the database.</p>
+    </div>
+    <a href="{% url 'new_cat' %}" class="btn btn-primary">New Cat</a>
+    <h3 class="my-4">All Cats</h3>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="col">
+            <div class="card" href="edit">
+                <img src="https://i.pinimg.com/736x/8f/ab/45/8fab45c0d2f8173ac047119d57b71ef6.jpg" class="card-img-top" alt="Cat Name">
+                <div class="card-body">
+                    <h5 class="card-title">Urur</h5>
+                    <p class="card-text">Breed: Sphynx</p>
+                    <p class="card-text text-success">EUR 1000</p>
+                    <div class="d-flex justify-content-between">
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+<br>
+{% endblock %}
