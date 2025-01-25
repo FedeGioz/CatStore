@@ -1,0 +1,32 @@
+{% extends 'master.html' %}
+
+{% block title %}New Cat{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="text-center">
+        <h1>New Cat</h1>
+        <p class="lead">Add a new cat to the database.</p>
+    </div>
+    <form method="POST" action="{% url 'new_cat' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+        </div>
+        <div class="mb-3">
+            <label for="breed" class="form-label">Breed</label>
+            <input type="text" class="form-control" id="breed" name="breed" required>
+        </div>
+        <div class="mb-3">
+            <label for="price" class="form-label">Price</label>
+            <input type="number" class="form-control" id="price" name="price" required>
+        </div>
+        <div class="mb-3">
+            <label for="image" class="form-label">Image</label>
+            <input type="file" class="form-control" id="image" name="image" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Cat</button>
+    </form>
+</div>
+{% endblock %}
