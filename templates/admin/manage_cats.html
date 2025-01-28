@@ -19,9 +19,11 @@
                     <p class="card-text">Breed: Sphynx</p>
                     <p class="card-text text-success">EUR 1000</p>
                     <div class="d-flex justify-content-between">
+                        <a href="{% url 'edit_cat' 1 %}" class="btn btn-primary">Edit</a>
+                        <a href="{% url 'delete_cat' 1 %}" class="btn btn-danger">Delete</a>
+                    </div>
                 </div>
             </div>
-        </div>
         </div>
     </div>
 </div>

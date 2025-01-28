@@ -1,10 +1,9 @@
 import stripe
-from stripe.checkout import Session
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.http.response import JsonResponse
@@ -82,6 +81,8 @@ def login_page(request):
 
         # Authenticate the user with the provided username and password
         user = authenticate(username=username, password=password)
+        group = Group.objects.get(name='user')
+        user.groups.add(group)
 
         if user is None:
             # Display an error message if authentication fails (invalid password)
@@ -160,7 +161,7 @@ def new_cat(request):
     if not request.user.is_authenticated:
         return render(request, 'error.html', {'message': 'You are not logged in!'})
 
-    if not is_staff(request.user):
+    if not request.user.groups.filter(name='admin').exists():
         return render(request, 'error.html', {'message': 'You aren\'t allowed to create a new cat!'})
 
     if request.method == "POST":
@@ -190,8 +191,26 @@ def manage_cats(request):
     #cats = Cat.objects.all()
     return render(request, 'admin/manage_cats.html')
 
-def edit_cat(request):
+def edit_cat(request, cat_id=-1):
+    if not request.user.groups.filter(name='admin').exists():
+        return render(request, 'error.html', {'message': 'You aren\'t allowed to edit a cat!'})
+
     return render(request, 'admin/edit_cat.html')
+
+def orders(request):
+    return render(request, 'user/orders.html')
+
+def delete_cat(request, cat_id=-1):
+    if not request.user.groups.filter(name='admin').exists():
+        return render(request, 'error.html', {'message': 'You aren\'t allowed to delete a cat!'})
+
+    return redirect('/administration/manage/')
+
+def switch_sections(request):
+    if request.user.groups.filter(name='admin').exists():
+        return redirect('/administration/manage/')
+    elif request.user.groups.filter(name='user').exists():
+        return redirect('/accounts/orders')
 
 class SuccessView(TemplateView):
     template_name = 'payment_success.html'
