@@ -21,7 +21,7 @@ if not User.objects.filter(username='admin').exists():
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index, name='index'),
+    path('', views.index, name='home'),
     path('buy/<cat_id>', views.buy, name='buy'),
     path('verify/', views.verify, name='verify'),
     path('config/', views.stripe_config),
@@ -31,11 +31,15 @@ urlpatterns = [
     path('accounts/login/', login_page, name='login_page'),
     path('accounts/register/', register_page, name='register'),
     path('accounts/logout/', views.logout_page, name='logout'),
-    path('wishlist/', views.wishlist, name='wishlist'),
+    path('wishlist/', views.view_wishlist, name='view_wishlist'),
+    path('wishlist/add/<int:cat_id>/', views.add_to_wishlist, name='add_to_wishlist'),
+    path('wishlist/remove/<int:cat_id>/', views.remove_from_wishlist, name='remove_from_wishlist'),
     path('administration/new/', views.new_cat, name='new_cat'),
     path('administration/manage/', views.manage_cats, name='manage_cats'),
     path('accounts/orders/', views.orders, name='orders'),
-    path('administration/edit/<cat_id>', views.edit_cat, name='edit_cat'),
-    path('administration/delete/<cat_id>', views.delete_cat, name='delete_cat'),
+    path('administration/edit/<int:cat_id>/', views.edit_cat, name='edit_cat'),
+    path('administration/delete/<int:cat_id>/', views.delete_cat, name='delete_cat'),
     path('switch/', views.switch_sections, name='switch_sections'),
+    path('cats/', views.all_cats, name='cats'),
+    path('mass_edit_cats/', views.mass_edit_cats, name='mass_edit_cats'),
 ]

@@ -1,79 +1,35 @@
 {% extends 'master.html' %}
 
-{% block title %}Welcome to CatStore{% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block content %}
 <div class="container my-5">
     <div class="text-center">
-        <h1>Welcome to CatStore!</h1>
-        <p class="lead">Your one-stop shop for finding the purrfect feline friend.</p>
+        <h1>Welcome to CatStore</h1>
+        <p class="lead">Find your perfect feline friend.</p>
     </div>
 
-    <!-- Featured Cats - 3 random cats taken from DB to show on the homepage, the rest will be shown in the "All Cats" page -->
+    <!-- Featured Cats - Display featured cats on the homepage -->
     <h3 class="my-4">Featured Cats</h3>
     <div class="row row-cols-1 row-cols-md-3 g-4">
-        <!-- Example cat card, in reality they need to be generated with a foreach when DB will be ready -->
+        {% for cat in featured_cats %}
         <div class="col">
             <div class="card">
-                <img src="https://i.pinimg.com/736x/8f/ab/45/8fab45c0d2f8173ac047119d57b71ef6.jpg" class="card-img-top" alt="Cat Name">
+                <div class="card-img-top" style="width: 100%; height: 667px; overflow: hidden;">
+                    <img src="{{ cat.image_url }}" alt="{{ cat.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">Urur</h5>
-                    <p class="card-text">Breed: Sphynx</p>
-                    <p class="card-text text-success">EUR 1000</p>
+                    <h5 class="card-title">{{ cat.name }}</h5>
+                    <p class="card-text">Breed: {{ cat.breed }}</p>
+                    <p class="card-text text-success">EUR {{ cat.price }}</p>
                     <div class="d-flex justify-content-between">
-                        <form method="POST" action="{% url 'wishlist' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="cat_id" value="1">
-                            <button type="submit" class="btn btn-primary">Add to Wishlist</button>
-                        </form>
-                        <a href="{% url 'buy' 1 %}" class="btn btn-success">Buy Now</a>
+                        <a href="/buy/{{ cat.id }}" class="btn btn-success">Buy Now</a>
+                        <a href="/wishlist/add/{{ cat.id }}" class="btn btn-primary">Add to Wishlist</a>
                     </div>
                 </div>
             </div>
         </div>
-        
-        
-        <div class="col">
-            <div class="card">
-                <img src="https://i.pinimg.com/736x/8f/ab/45/8fab45c0d2f8173ac047119d57b71ef6.jpg" class="card-img-top" alt="Cat Name">
-                <div class="card-body">
-                    <h5 class="card-title">Urur</h5>
-                    <p class="card-text">Breed: Sphynx</p>
-                    <p class="card-text text-success">EUR 1000</p>
-                    <div class="d-flex justify-content-between">
-                        <form method="POST" action="{% url 'wishlist' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="cat_id" value="1">
-                            <button type="submit" class="btn btn-primary">Add to Wishlist</button>
-                        </form>
-                        <a href="{% url 'buy' 1 %}" class="btn btn-success">Buy Now</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        
-        <div class="col">
-            <div class="card">
-                <img src="https://i.pinimg.com/736x/8f/ab/45/8fab45c0d2f8173ac047119d57b71ef6.jpg" class="card-img-top" alt="Cat Name">
-                <div class="card-body">
-                    <h5 class="card-title">Urur</h5>
-                    <p class="card-text">Breed: Sphynx</p>
-                    <p class="card-text text-success">EUR 1000</p>
-                    <div class="d-flex justify-content-between">
-                        <form method="POST" action="{% url 'wishlist' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="cat_id" value="1">
-                            <button type="submit" class="btn btn-primary">Add to Wishlist</button>
-                        </form>
-                        <a href="{% url 'buy' 1 %}" class="btn btn-success">Buy Now</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        
-        
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

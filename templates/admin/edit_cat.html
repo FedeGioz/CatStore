@@ -3,31 +3,64 @@
 {% block title %}Edit Cat{% endblock %}
 
 {% block content %}
-    <div class="container my-5">
+<div class="container my-5">
     <div class="text-center">
         <h1>Edit Cat</h1>
-        <p class="lead">Edit an existing cat</p>
+        <p class="lead">Edit the details of the cat.</p>
     </div>
-    {#    Need to load the cat info when the DB will be ready    #}
-    <form method="POST" action="{% url 'edit_cat' %}" enctype="multipart/form-data">
+
+    <form method="post">
         {% csrf_token %}
-        <div class="mb-3">
-            <label for="name" class="form-label">Name</label>
-            <input type="text" class="form-control" id="name" name="name" required>
+        <div class="row">
+            <div class="col-md-6">
+                <label for="name">Name:</label>
+                <input type="text" name="name" id="name" class="form-control" value="{{ cat.name }}">
+            </div>
+            <div class="col-md-6">
+                <label for="age">Age:</label>
+                <input type="number" name="age" id="age" class="form-control" value="{{ cat.age }}">
+            </div>
+            <div class="col-md-6">
+                <label for="color">Color:</label>
+                <input type="text" name="color" id="color" class="form-control" value="{{ cat.color }}">
+            </div>
+            <div class="col-md-6">
+                <label for="breed">Breed:</label>
+                <input type="text" name="breed" id="breed" class="form-control" value="{{ cat.breed }}">
+            </div>
+            <div class="col-md-6">
+                <label for="price">Price:</label>
+                <input type="number" name="price" id="price" class="form-control" value="{{ cat.price }}">
+            </div>
+            <div class="col-md-6">
+                <label for="description">Description:</label>
+                <textarea name="description" id="description" class="form-control">{{ cat.description }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label for="image_url">Image URL:</label>
+                <input type="text" name="image_url" id="image_url" class="form-control" value="{{ cat.image_url }}" oninput="updateImagePreview()">
+            </div>
+            <div class="col-md-6">
+                <label>Image Preview:</label>
+                <div class="card-img-top" style="width: 500px; height: 667px; overflow: hidden;">
+                    <img id="image_preview" src="{{ cat.image_url }}" alt="Image Preview" style="width: 500px; height: 667px; object-fit: cover;" onerror="handleImageError()">
+                </div>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="breed" class="form-label">Breed</label>
-            <input type="text" class="form-control" id="breed" name="breed" required>
-        </div>
-        <div class="mb-3">
-            <label for="price" class="form-label">Price</label>
-            <input type="number" class="form-control" id="price" name="price" required>
-        </div>
-        <div class="mb-3">
-            <label for="image" class="form-label">Image</label>
-            <input type="file" class="form-control" id="image" name="image" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Edit Cat</button>
+        <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
     </form>
 </div>
+
+<script>
+function updateImagePreview() {
+    const imageUrl = document.getElementById('image_url').value;
+    const imagePreview = document.getElementById('image_preview');
+    imagePreview.src = imageUrl;
+}
+
+function handleImageError() {
+    const imagePreview = document.getElementById('image_preview');
+    imagePreview.src = 'https://media1.tenor.com/m/KEzW7ALwfUAAAAAC/cat-what.gif';
+}
+</script>
 {% endblock %}

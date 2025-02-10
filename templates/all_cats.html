@@ -1,11 +1,13 @@
 {% extends 'master.html' %}
-{% load static %}
 
-{% block title %}Your Wishlist{% endblock %}
+{% block title %}All Cats{% endblock %}
 
 {% block content %}
 <div class="container my-5">
-    <h1 class="text-center mb-4">Your Wishlist</h1>
+    <div class="text-center">
+        <h1>All Cats</h1>
+        <p class="lead">Browse through all the cats available at CatStore.</p>
+    </div>
 
     <!-- Sorting and Filtering Form -->
     <form method="get" class="mb-4">
@@ -53,29 +55,23 @@
         </div>
     </form>
 
-    <div class="row">
-        {% if cats|length == 0 %}
-        <div class="col-md-12">
-            <div class="alert alert-warning" role="alert">
-                Your wishlist is empty!
-            </div>
-        </div>
-        {% endif %}
-        {% for cat in cats %}
-        <div class="col-md-4">
-            <div class="card mb-4">
+    <!-- All Cats - Display all cats from the database -->
+    <h3 class="my-4">All Cats</h3>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for cat in all_cats %}
+        <div class="col">
+            <div class="card">
                 <div class="card-img-top" style="width: 100%; height: 667px; overflow: hidden;">
                     <img src="{{ cat.image_url }}" alt="{{ cat.name }}" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
                 <div class="card-body">
                     <h5 class="card-title">{{ cat.name }}</h5>
                     <p class="card-text">Breed: {{ cat.breed }}</p>
-                    <p class="card-text">Age: {{ cat.age }} years</p>
-                    <p class="card-text">Color: {{ cat.color }}</p>
-                    <p class="card-text">Description: {{ cat.description }}</p>
-                    <p class="card-text text-success h4">Price: EUR {{ cat.price }}</p>
-                    <a href="/buy/{{ cat.id }}" class="btn btn-primary">Buy</a>
-                    <a href="/wishlist/remove/{{ cat.id }}" class="btn btn-danger">Remove from Wishlist</a>
+                    <p class="card-text text-success">EUR {{ cat.price }}</p>
+                    <div class="d-flex justify-content-between">
+                        <a href="/buy/{{ cat.id }}" class="btn btn-success">Buy Now</a>
+                        <a href="/wishlist/add/{{ cat.id }}" class="btn btn-primary">Add to Wishlist</a>
+                    </div>
                 </div>
             </div>
         </div>
