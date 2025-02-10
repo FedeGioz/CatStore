@@ -331,7 +331,6 @@ def switch_sections(request):
     else:
         return redirect('/accounts/orders')
 
-
 @login_required
 def add_to_wishlist(request, cat_id):
     try:
@@ -446,6 +445,21 @@ def mass_edit_cats(request):
         return redirect('manage_cats')
     else:
         return redirect('manage_cats')
+
+def orders(request):
+    return render(request, 'user/orders.html')
+
+def delete_cat(request, cat_id=-1):
+    if not request.user.groups.filter(name='admin').exists():
+        return render(request, 'error.html', {'message': 'You aren\'t allowed to delete a cat!'})
+
+    return redirect('/administration/manage/')
+
+def switch_sections(request):
+    if request.user.groups.filter(name='admin').exists():
+        return redirect('/administration/manage/')
+    elif request.user.groups.filter(name='user').exists():
+        return redirect('/accounts/orders')
 
 class SuccessView(TemplateView):
     template_name = 'payment_success.html'
