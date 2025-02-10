@@ -10,16 +10,19 @@
         <div class="col-md-6">
             <div class="card">
                 <img src="{{ cat.image_url }}" class="card-img-top" alt="{{ cat.name }}">
-                <div class="card-body">
-                    <h5 class="card-title">{{ cat.name }}</h5>
-                    <p class="card-text">Breed: {{ cat.breed }}</p>
-                    <p class="card-text">Age: {{ cat.age }} years</p>
-                    <p class="card-text text-success h4">Price: EUR {{ cat.price }}</p>
-                </div>
             </div>
         </div>
-        <div class="col-md-6 d-flex align-items-center">
-            <button class="btn btn-primary" id="submitBtn">Purchase!</button>
+        <div class="col-md-6 d-flex flex-column justify-content-center">
+            <h5 class="card-title">{{ cat.name }}</h5>
+            <p class="card-text">Breed: {{ cat.breed }}</p>
+            <p class="card-text">Age: {{ cat.age }} years</p>
+            <p class="card-text">Color: {{ cat.color }}</p>
+            <p class="card-text">Description: {{ cat.description }}</p>
+            <p class="card-text text-success h4">Price: EUR {{ cat.price }}</p>
+            <div class="mt-4">
+                <button class="btn btn-primary mb-3" id="submitBtn">Purchase!</button>
+                <a href="/wishlist/add/{{ cat.id }}" class="btn btn-secondary">Add to Wishlist</a>
+            </div>
         </div>
     </div>
 </div>
