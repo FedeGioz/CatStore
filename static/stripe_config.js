@@ -4,7 +4,9 @@ fetch("/config/")
     const stripe = Stripe(data.publicKey);
 
     document.querySelector("#submitBtn").addEventListener("click", () => {
-        fetch("/create-checkout-session/")
+    const catId = document.querySelector("#submitBtn").getAttribute("data-cat-id");
+    console.log('Cat ID:', catId); // Debugging line to check the value
+    fetch(`/create-checkout-session/?cat_id=${catId}`)
         .then((result) => { return result.json(); })
         .then((data) => {
             console.log(data);

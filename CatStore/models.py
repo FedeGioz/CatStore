@@ -36,3 +36,34 @@ class Wishlist(models.Model):
 
     def __str__(self):
         return f"Wishlist item for user {self.user.username} and cat {self.cat_id}"
+
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('pending_verification', 'Pending Verification'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed')
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    cat_id = models.IntegerField()
+    stripe_session_id = models.CharField(max_length=255)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, default='pending')
+    persona_inquiry_id = models.CharField(max_length=255, blank=True, null=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Order #{self.id} - {self.user.username}"
+
+class PurchasedCat(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    cat_id = models.IntegerField()  # ID from external API
+    purchase_date = models.DateTimeField(auto_now_add=True)
+    verified = models.BooleanField(default=False)
+    verification_date = models.DateTimeField(null=True, blank=True)
+    documents = models.JSONField(default=dict)  # Store generated documents
+
+    class Meta:
+        unique_together = [['user', 'cat_id']]

@@ -1,57 +1,58 @@
 {% extends 'master.html' %}
-
-{% block title %}Your Orders{% endblock %}
+{% load static %}
 
 {% block content %}
 <div class="container my-5">
-    <h1 class="text-center mb-4">Your Orders</h1>
-    
-    {% if orders %}
-        <div class="table-responsive">
-            <table class="table table-striped align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th scope="col">Order ID</th>
-                        <th scope="col">Cat Name</th>
-                        <th scope="col">Breed</th>
-                        <th scope="col">Price (EUR)</th>
-                        <th scope="col">Order Date</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in orders %}
-                    <tr>
-                        <td>{{ order.id }}</td>
-                        <td>{{ order.cat_name }}</td>
-                        <td>{{ order.breed }}</td>
-                        <td>{{ order.price }}</td>
-                        <td>{{ order.order_date }}</td>
-                        <td>
-                            <span class="badge 
-                                {% if order.status == 'Completed' %}bg-success
-                                {% elif order.status == 'Pending' %}bg-warning
-                                {% else %}bg-danger{% endif %}">
-                                {{ order.status }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if order.status == 'Pending' %}
-                            <a href="{% url 'cancel_order' order.id %}" class="btn btn-danger btn-sm">Cancel Order</a>
-                            {% else %}
-                            <a href="{% url 'view_order' order.id %}" class="btn btn-primary btn-sm">View Details</a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="alert alert-info text-center" role="alert">
-            You have no orders yet. Start shopping for your dream cat!
-        </div>
-    {% endif %}
+    <h2>Your Purchase History</h2>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Cat</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Documents</th> <!-- New column for documents -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.order.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        {% if order.cat %}
+                            <img src="{{ order.cat.image_url }}" alt="{{ order.cat.name }}"
+                                 style="width: 50px; height: 50px; object-fit: cover;">
+                            {{ order.cat.name }}
+                        {% else %}
+                            {{ order.error }}
+                        {% endif %}
+                    </td>
+                    <td>€{{ order.order.amount }}</td>
+                    <td>
+                        <span class="badge
+                            {% if order.order.status == 'completed' %}bg-success
+                            {% else %}bg-warning{% endif %}">
+                            {{ order.order.status|title }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if order.cat %}
+                        <a href="{% url 'generate_cat_pdf' order.cat.id %}" target="_blank"
+                           class="btn btn-sm btn-outline-secondary">
+                            Download Documents
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No purchases found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

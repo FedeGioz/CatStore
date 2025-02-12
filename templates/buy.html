@@ -20,7 +20,7 @@
             <p class="card-text">Description: {{ cat.description }}</p>
             <p class="card-text text-success h4">Price: EUR {{ cat.price }}</p>
             <div class="mt-4">
-                <button class="btn btn-primary mb-3" id="submitBtn">Purchase!</button>
+                <button class="btn btn-primary mb-3" id="submitBtn" data-cat-id="{{ cat.id }}">Purchase!</button>
                 <a href="/wishlist/add/{{ cat.id }}" class="btn btn-secondary">Add to Wishlist</a>
             </div>
         </div>

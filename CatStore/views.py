@@ -1,15 +1,19 @@
 import base64
+import logging
 import random
 import requests
 import stripe
+from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import Group
 from django.views.generic import TemplateView
 from django.conf import settings
-from django.http.response import JsonResponse
+from django.http.response import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import *
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 
 def index(request):
@@ -90,9 +94,28 @@ def stripe_config(request):
 @csrf_exempt
 def create_checkout_session(request):
     if request.method == 'GET':
-        domain_url = 'http://127.0.0.1:8000/'
+        cat_id = request.GET.get('cat_id')
+        if not cat_id:
+            logging.error('Cat ID not provided')
+            return JsonResponse({'error': 'Cat ID not provided'}, status=400)
+
+        response = requests.get(f'http://127.0.0.1:9000/{cat_id}')
+        if response.status_code != 200:
+            logging.error(f'Cat not found: {response.status_code}')
+            return JsonResponse({'error': 'Cat not found'}, status=404)
+
+        cat = response.json()
+        stripe_product_id = cat.get('stripe_product')
+        price = cat.get('price')  # Ensure this field exists in the API response
+
+        if not stripe_product_id or not price:
+            logging.error('Missing Stripe product ID or price')
+            return JsonResponse({'error': 'Product configuration error'}, status=400)
+
+        domain_url = 'http://127.0.0.1:8100/'
         stripe.api_key = settings.STRIPE_SECRET_KEY
         try:
+
             checkout_session = stripe.checkout.Session.create(
                 success_url=domain_url + 'payment_success?session_id={CHECKOUT_SESSION_ID}',
                 cancel_url=domain_url + 'payment_cancelled/',
@@ -102,19 +125,63 @@ def create_checkout_session(request):
                     {
                         'price_data': {
                             'currency': 'eur',
-                            'product_data': {
-                                'name': 'Cat',
-                            },
-                            'unit_amount': 1000,
+                            'product': stripe_product_id,
+                            'unit_amount': int(price * 100),  # Convert EUR to cents
                         },
                         'quantity': 1,
                     }
-                ]
+                ],
+                metadata={'cat_id': cat_id},  # Add metadata
+                payment_intent_data={
+                    'metadata': {'cat_id': cat_id}  # Also store in payment intent
+                }
             )
+
+            # Create preliminary order record
+            if request.user.is_authenticated:
+                Order.objects.create(
+                    user=request.user,
+                    cat_id=cat_id,
+                    stripe_session_id=checkout_session.id,
+                    amount=price,
+                    status='pending'
+                )
             return JsonResponse({'sessionId': checkout_session['id']})
         except Exception as e:
-            return JsonResponse({'error': str(e)})
+            logging.error(f'Error creating checkout session: {str(e)}')
+            return JsonResponse({'error': str(e)}, status=500)
 
+
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError as e:
+        return HttpResponse(status=400)
+
+    # Handle successful payment
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        handle_successful_payment(session)
+
+    return HttpResponse(status=200)
+
+
+def handle_successful_payment(session):
+    try:
+        order = Order.objects.get(stripe_session_id=session.id)
+        order.status = 'pending_verification'
+        order.save()
+    except Order.DoesNotExist:
+        pass
 
 def login_page(request):
     if request.method == 'POST':
@@ -200,7 +267,6 @@ def new_cat(request):
                 'image': image_data
             }
             response = requests.post(url, data=payload)
-            print(response.json())
             if response.status_code == 200:
                 image_url = response.json()['data']['url']
             else:
@@ -218,10 +284,23 @@ def new_cat(request):
                 'image_url': image_url
             }
 
-            headers = {'Authorization': 'Bearer i$&$aDz,9Z:b}n{2ZnnBj1r}-B{_2SX)rAjye3F;}&X;pw0zgdkjFCz!(+/2*P66'}
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+            product = stripe.Product.create(
+                name=data['name'],
+                default_price_data={
+                    "unit_amount": str(data['price'] * 100),
+                    "currency": "eur"
+                },
+                expand=["default_price"],
+                images=[image_url]
+            )
+
+            data['stripe_product'] = product.id
+
             print(data)
+
+            headers = {'Authorization': 'Bearer i$&$aDz,9Z:b}n{2ZnnBj1r}-B{_2SX)rAjye3F;}&X;pw0zgdkjFCz!(+/2*P66'}
             response = requests.post('http://127.0.0.1:9000/', json=data, headers=headers)
-            print(response.json())
             if response.status_code == 200:
                 return redirect('/administration/manage/')
             else:
@@ -308,8 +387,37 @@ def edit_cat(request, cat_id):
 
     return render(request, 'admin/edit_cat.html', {'cat': cat})
 
+
+@login_required
 def orders(request):
-    return render(request, 'user/orders.html')
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    order_details = []
+
+    for order in orders:
+        try:
+            response = requests.get(f'http://127.0.0.1:9000/{order.cat_id}')
+            if response.status_code == 200:
+                cat_data = response.json()
+                order_details.append({
+                    'order': order,
+                    'cat': cat_data,
+                    'receipt_url': stripe.checkout.Session.retrieve(
+                        order.stripe_session_id
+                    ).get('charges', {}).get('data', [{}])[0].get('receipt_url')
+                })
+            else:
+                order_details.append({
+                    'order': order,
+                    'error': 'Cat information unavailable'
+                })
+        except requests.RequestException:
+            order_details.append({
+                'order': order,
+                'error': 'Cat information unavailable'
+            })
+
+    return render(request, 'user/orders.html', {'orders': order_details})
 
 def delete_cat(request, cat_id=-1):
     if not request.user.groups.filter(name='admin').exists():
@@ -446,23 +554,92 @@ def mass_edit_cats(request):
     else:
         return redirect('manage_cats')
 
-def orders(request):
-    return render(request, 'user/orders.html')
+@login_required
+def payment_success(request):
+    session_id = request.GET.get('session_id')
+    order = Order.objects.get(stripe_session_id=session_id)
 
-def delete_cat(request, cat_id=-1):
-    if not request.user.groups.filter(name='admin').exists():
-        return render(request, 'error.html', {'message': 'You aren\'t allowed to delete a cat!'})
+    return render(request,'payment_success.html', {'userId': request.user.id, 'orderId': order.id})
 
-    return redirect('/administration/manage/')
 
-def switch_sections(request):
-    if request.user.groups.filter(name='admin').exists():
-        return redirect('/administration/manage/')
-    elif request.user.groups.filter(name='user').exists():
-        return redirect('/accounts/orders')
+# TODO: flag vendibile o no su api, se cancello il gatto dopo vendita la lista degli ordini non va piu' (cat info unavailable), displayare come all cats solo quelli con flag a true
+# TODO: rendere carino il bottone di back to orders, redirect non va per il js nella pagina embed
+# TODO: sistemare il sizing dell'immagine sulla buy page e l'allineamento dei bottoni
+# TODO: testare tutto il flow di registrazione, creazione e acquisto in vista della presentazione
+# TODO: provare a mettere mailer su stripe
+@login_required
+@csrf_exempt
+def verified(request, order_id, inquiry_id):
+    if request.method == "POST":
+        url = f"https://api.withpersona.com/api/v1/inquiries/{inquiry_id}"
 
-class SuccessView(TemplateView):
-    template_name = 'payment_success.html'
+        headers = {
+            'Persona-Version': '2023-01-05',
+            'accept': 'application/json',
+            'authorization': 'Bearer persona_sandbox_de565a8c-13df-40a7-8574-7ef5780fe016',
+        }
+
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            logging.error(f"Failed to fetch inquiry: {e}")
+            return JsonResponse({'status': 'error', 'message': 'Failed to fetch inquiry'}, status=500)
+
+        data = response.json()
+
+        if data['data']['attributes']['status'] == "approved":
+            try:
+                order = Order.objects.get(id=order_id)
+                order.status = 'completed'
+                order.save()
+
+                # Delete the cat from the database
+                cat_id = order.cat_id
+                headers = {'Authorization': 'Bearer i$&$aDz,9Z:b}n{2ZnnBj1r}-B{_2SX)rAjye3F;}&X;pw0zgdkjFCz!(+/2*P66'}
+                delete_response = requests.delete(f'http://127.0.0.1:9000/{cat_id}', headers=headers)
+                if delete_response.status_code != 200:
+                    logging.error(f"Failed to delete cat: {delete_response.status_code}")
+                    return JsonResponse({'status': 'error', 'message': 'Failed to delete cat'}, status=500)
+
+                print("REDIRECTING")
+                return redirect('http://localhost:8100/accounts/orders/')
+            except Order.DoesNotExist:
+                logging.error("Order not found")
+                return JsonResponse({'status': 'error', 'message': 'Order not found'}, status=404)
+        else:
+            logging.error("Inquiry not approved")
+            return JsonResponse({'status': 'error', 'message': 'Inquiry not approved'}, status=400)
+    logging.error("Invalid method")
+    return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+
+def generate_cat_pdf(request, cat_id):
+    # Fetch cat details from the database or API
+    response = requests.get(f'http://127.0.0.1:9000/{cat_id}')
+    if response.status_code != 200:
+        return HttpResponse('Cat not found', status=404)
+
+    cat = response.json()
+
+    # Create the PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{cat["name"]}_details.pdf"'
+
+    p = canvas.Canvas(response, pagesize=letter)
+    p.drawString(100, 750, f"Cat Name: {cat['name']}")
+    p.drawString(100, 730, f"Age: {cat['age']}")
+    p.drawString(100, 710, f"Breed: {cat['breed']}")
+    p.drawString(100, 690, f"Color: {cat['color']}")
+    p.drawString(100, 670, f"Price: €{cat['price']}")
+
+    # Draw the cat image
+    if cat['image_url']:
+        p.drawImage(cat['image_url'], 100, 500, width=200, height=200)
+
+    p.showPage()
+    p.save()
+
+    return response
 
 class CancelledView(TemplateView):
     template_name = 'payment_cancelled.html'

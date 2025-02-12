@@ -89,7 +89,7 @@
                         <p class="card-text text-success">EUR {{ cat.price }}</p>
                         <div class="d-flex justify-content-between">
                             <a href="{% url 'edit_cat' cat.id %}" class="btn btn-primary">Edit</a>
-                            <a href="{% url 'delete_cat' cat.id %}" class="btn btn-danger">Delete</a>
+                            <a href="{% url 'delete' cat.id %}" class="btn btn-danger">Delete</a>
                         </div>
                         <div class="form-check mt-2">
                             <input class="form-check-input" type="checkbox" name="cat_ids" value="{{ cat.id }}" id="cat{{ cat.id }}">
