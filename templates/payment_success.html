@@ -9,8 +9,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
 
+  <style>
+      .back-to-orders-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        text-decoration: none;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .back-to-orders-btn:hover {
+        background-color: #0056b3;
+      }
+    </style>
   <body>
-    <a href="{% url 'orders' %}">BACK TO ORDERS</a>
+    <a href="{% url 'orders' %}" class="back-to-orders-btn">BACK TO ORDERS</a>
 
     <!-- Initialize the Persona client in whichever way is appropriate for your application. -->
     <script>

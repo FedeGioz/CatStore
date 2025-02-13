@@ -20,7 +20,8 @@ def index(request):
     response = requests.get('http://127.0.0.1:9000/')
     if response.status_code == 200:
         cats = response.json()
-        featured_cats = random.sample(cats, min(len(cats), 3))
+        sellable_cats = [cat for cat in cats if cat.get('sellable', True)]
+        featured_cats = random.sample(sellable_cats, min(len(sellable_cats), 3))
     else:
         print("Failed to fetch cats")
         featured_cats = []
@@ -30,9 +31,10 @@ def all_cats(request):
     response = requests.get('http://127.0.0.1:9000/')
     if response.status_code == 200:
         all_cats = response.json()
+        sellable_cats = [cat for cat in all_cats if cat.get('sellable', True)]
     else:
         print("Failed to fetch cats")
-        all_cats = []
+        sellable_cats = []
 
     # Get sorting and filtering parameters
     sort_by = request.GET.get('sort_by', 'id')
@@ -56,7 +58,7 @@ def all_cats(request):
 
     # Apply filters
     filtered_cats = [
-        cat for cat in all_cats
+        cat for cat in sellable_cats
         if ((not name_filter or name_filter.lower() in cat['name'].lower()) and
             (not color_filter or color_filter.lower() in cat['color'].lower()) and
             min_age <= cat['age'] <= max_age and
@@ -247,16 +249,8 @@ def wishlist(request):
     else:
         return redirect('/accounts/login/')
 
-def is_staff(user):
-    return user.groups.filter(name='Administrator').exists()
-
+@staff_member_required
 def new_cat(request):
-    if not request.user.is_authenticated:
-        return render(request, 'error.html', {'message': 'You are not logged in!'})
-
-    if not request.user.groups.filter(name='admin').exists():
-        return render(request, 'error.html', {'message': 'You aren\'t allowed to create a new cat!'})
-
     if request.method == "POST":
         image = request.FILES.get('image')
         if image:
@@ -281,7 +275,8 @@ def new_cat(request):
                 'breed': request.POST.get('breed'),
                 'price': int(request.POST.get('price')),
                 'description': request.POST.get('description'),
-                'image_url': image_url
+                'image_url': image_url,
+                'sellable': True
             }
 
             stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -308,6 +303,7 @@ def new_cat(request):
                 return redirect('/administration/new/')
     return render(request, 'admin/new_cat.html')
 
+@staff_member_required
 def manage_cats(request):
     response = requests.get('http://localhost:9000/')
     if response.status_code == 200:
@@ -353,10 +349,8 @@ def manage_cats(request):
 
     return render(request, 'admin/manage_cats.html', {'cats': filtered_cats})
 
+@staff_member_required
 def edit_cat(request, cat_id):
-    if not request.user.groups.filter(name='admin').exists():
-        return render(request, 'error.html', {'message': 'You aren\'t allowed to edit a cat!'})
-
     response = requests.get(f'http://127.0.0.1:9000/{cat_id}')
     if response.status_code == 200:
         cat = response.json()
@@ -419,10 +413,8 @@ def orders(request):
 
     return render(request, 'user/orders.html', {'orders': order_details})
 
+@staff_member_required
 def delete_cat(request, cat_id=-1):
-    if not request.user.groups.filter(name='admin').exists():
-        return render(request, 'error.html', {'message': 'You aren\'t allowed to delete a cat!'})
-
     headers = {'Authorization': 'Bearer i$&$aDz,9Z:b}n{2ZnnBj1r}-B{_2SX)rAjye3F;}&X;pw0zgdkjFCz!(+/2*P66'}
     response = requests.delete(f'http://127.0.0.1:9000/{cat_id}', headers=headers)
     if response.status_code == 200:
@@ -531,6 +523,7 @@ def view_wishlist(request):
 
     return render(request, 'wishlist.html', {'cats': valid_cats})
 
+@staff_member_required
 def mass_edit_cats(request):
     if request.method == 'POST':
         headers = {'Authorization': 'Bearer i$&$aDz,9Z:b}n{2ZnnBj1r}-B{_2SX)rAjye3F;}&X;pw0zgdkjFCz!(+/2*P66'}
@@ -561,12 +554,6 @@ def payment_success(request):
 
     return render(request,'payment_success.html', {'userId': request.user.id, 'orderId': order.id})
 
-
-# TODO: flag vendibile o no su api, se cancello il gatto dopo vendita la lista degli ordini non va piu' (cat info unavailable), displayare come all cats solo quelli con flag a true
-# TODO: rendere carino il bottone di back to orders, redirect non va per il js nella pagina embed
-# TODO: sistemare il sizing dell'immagine sulla buy page e l'allineamento dei bottoni
-# TODO: testare tutto il flow di registrazione, creazione e acquisto in vista della presentazione
-# TODO: provare a mettere mailer su stripe
 @login_required
 @csrf_exempt
 def verified(request, order_id, inquiry_id):
@@ -597,13 +584,12 @@ def verified(request, order_id, inquiry_id):
                 # Delete the cat from the database
                 cat_id = order.cat_id
                 headers = {'Authorization': 'Bearer i$&$aDz,9Z:b}n{2ZnnBj1r}-B{_2SX)rAjye3F;}&X;pw0zgdkjFCz!(+/2*P66'}
-                delete_response = requests.delete(f'http://127.0.0.1:9000/{cat_id}', headers=headers)
-                if delete_response.status_code != 200:
-                    logging.error(f"Failed to delete cat: {delete_response.status_code}")
+                make_unsellable = requests.patch(f'http://127.0.0.1:9000/{cat_id}', headers=headers)
+                if make_unsellable.status_code != 200:
+                    logging.error(f"Failed to delete cat: {make_unsellable.status_code}")
                     return JsonResponse({'status': 'error', 'message': 'Failed to delete cat'}, status=500)
 
-                print("REDIRECTING")
-                return redirect('http://localhost:8100/accounts/orders/')
+                return redirect('/accounts/orders/')
             except Order.DoesNotExist:
                 logging.error("Order not found")
                 return JsonResponse({'status': 'error', 'message': 'Order not found'}, status=404)
@@ -613,6 +599,7 @@ def verified(request, order_id, inquiry_id):
     logging.error("Invalid method")
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
+@login_required
 def generate_cat_pdf(request, cat_id):
     # Fetch cat details from the database or API
     response = requests.get(f'http://127.0.0.1:9000/{cat_id}')
